@@ -46,7 +46,37 @@ class BigramModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim=1)
         return idx
 
+class AttentionModel(nn.Module):
+    def __init__(self, vocab_size, n_embd, block_size):
+        super().__init__()
+        self.block_size= block_size
+        self.token_emb = nn.Embedding(vocab_size, n_embd)
+        self.pos_emb = nn.Embedding(block_size, n_embd)
+        self.head = Head(n_embd, n_embd, block_size)
+        self.lm_head = nn.Linear(n_embd, vocab_size)
 
+    def forward(self, idx, targets=None):
+        B, T = idx.shape
+        tok = self.token_emb(idx)
+        pos = self.pos_emb(torch.arange(T, device = idx.device))
+        x = tok + pos
+        x = self.head(x)
+        logits = self.lm_head(x)
+
+        if targets is None:
+            return logits, None
+        loss = F.cross_entropy(logits.view(-1, logits.shape[-1]), targets.view(-1))
+        return logits, loss
+
+    def generate(self, idx, max_new_tokens):
+        for _ in range(max_new_tokens):
+            idx_cond = idx[:, -self.block_size:]
+            logits, _ = self(idx_cond)
+            logits = logits[:, -1, :]
+            probabilities = F.softmax(logits, dim= -1)
+            idx_next = torch.multinomial(probabilities, num_samples=1)
+            idx = torch.cat((idx, idx_next), dim=1)
+        return idx
 
 if __name__ == "__main__":
     from data import get_batch, tok

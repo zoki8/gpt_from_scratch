@@ -1,6 +1,6 @@
 import torch
 from data import get_batch, tok
-from model import BigramModel
+from model import BigramModel, AttentionModel
 
 batch_size = 32
 block_size = 8
@@ -8,8 +8,8 @@ max_steps = 3000
 eval_interval = 300
 eval_iters = 200
 
-model = BigramModel(tok.vocab_size)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2)
+model = AttentionModel(tok.vocab_size, n_embd=32, block_size=block_size)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
 @torch.no_grad()
 def estimate_loss():
@@ -28,7 +28,7 @@ def estimate_loss():
 for step in range(max_steps):
     if step % eval_interval == 0:
         l = estimate_loss()
-        print(f"{step}: train {l['train']:.3f}, {l['val']:.3f}")
+        print(f"{step}: train {l['train']:.3f}, val {l['val']:.3f}")
     x, y = get_batch('train', block_size, batch_size)
     logits, loss = model(x, y)
     optimizer.zero_grad()
