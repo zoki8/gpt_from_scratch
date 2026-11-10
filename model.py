@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
 class Head(nn.Module):
     def __init__(self, n_embd, head_size, block_size):
         super().__init__()
@@ -23,6 +24,15 @@ class Head(nn.Module):
         out = wei @ v
         return out
 
+class MultiHeadAttention(nn.Module):
+    def __init__(self, n_embd, num_heads, block_size):
+        super().__init__()
+        head_size = n_embd // num_heads
+        self.heads = nn.ModuleList([Head(n_embd, head_size, block_size) for _ in range(num_heads)])
+
+    def forward(self, x):
+        return torch.cat([h(x) for h in self.heads], dim=-1)
+        
 class BigramModel(nn.Module):
     def __init__(self, vocab_size: int):
         super().__init__()
@@ -52,7 +62,7 @@ class AttentionModel(nn.Module):
         self.block_size= block_size
         self.token_emb = nn.Embedding(vocab_size, n_embd)
         self.pos_emb = nn.Embedding(block_size, n_embd)
-        self.head = Head(n_embd, n_embd, block_size)
+        self.head = MultiHeadAttention(n_embd, 4, block_size)
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
