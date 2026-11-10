@@ -15,3 +15,6 @@ for step in range(3000):
 
     if step % 300 == 0:
         print(step, loss.item())
+
+start = torch.zeros((1, 1), dtype=torch.long)
+print(tok.decode(model.generate(start, max_new_tokens=300)[0].tolist()))
