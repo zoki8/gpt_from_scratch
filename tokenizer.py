@@ -1,7 +1,7 @@
+from hmac import new
 import re
 from collections import Counter
 
-# Splits text into chunks (words, punctuation, whitespace) so BPE merges never cross word boundaries.
 PRETOKENIZE = re.compile(r"'s|'t|'re|'ve|'m|'ll|'d| ?\w+| ?[^\s\w]+|\s+(?!\S)|\s+")
 
 
@@ -29,15 +29,14 @@ class CharTokenizer:
 def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
     out = []
     i = 0
-    while i < len(ids):
-        if i < len(ids) - 1 and ids[i] == pair[0] and ids[i + 1] == pair[1]:
+    while i<len(ids):
+        if i < len(ids) - 1 and ids[i] == pair[0] and ids[i+1] == pair[1]:
             out.append(new_id)
             i += 2
         else:
             out.append(ids[i])
             i += 1
     return out
-
 
 class BPETokenizer:
     def __init__(self, chars: list[str], merges: list[tuple[int, int]]):
@@ -62,15 +61,19 @@ class BPETokenizer:
             pairs = Counter()
             for w, freq in words.items():
                 s = seqs[w]
-                for pair in zip(s, s[1:]):
+                for pair in zip(s,s[1:]):
                     pairs[pair] += freq
+            
             if not pairs:
                 break
-            best = max(pairs, key=pairs.get)
+
+            best = max(pairs, key = pairs.get)
+
             merges.append(best)
+
             for w in words:
-                if len(seqs[w]) > 1:
-                    seqs[w] = merge(seqs[w], best, new_id)
+                seqs[w] = merge(seqs[w], best, new_id)
+
         return cls(chars, merges)
 
     @property
@@ -100,7 +103,6 @@ class BPETokenizer:
     def to_dict(self) -> dict:
         return {'type': 'bpe', 'chars': self.chars, 'merges': [list(m) for m in self.merges]}
 
-
 def load_tokenizer(d: dict):
     if d['type'] == 'char':
         return CharTokenizer(''.join(d['chars']))
@@ -109,9 +111,16 @@ def load_tokenizer(d: dict):
 
 if __name__ == "__main__":
     text = open("data/input.txt", encoding="utf-8").read()
-    tok = CharTokenizer(text)
-    print(tok.vocab_size)
-    ids = tok.encode("Hello there!")
-    print(ids)
-    print(tok.decode(ids))
-    assert tok.decode(tok.encode(text[:1000])) == text[:1000]
+
+    # provera za TODO 1
+    assert merge([5, 6, 7, 5, 6], (5, 6), 99) == [99, 7, 99]
+    assert merge([5, 5, 5], (5, 5), 9) == [9, 5]
+    print("merge: OK")
+
+    # provera za TODO 2-6
+    tok = BPETokenizer.train(text, 512)
+    print("vocab:", tok.vocab_size)
+    ids = tok.encode("ROMEO: Wherefore art thou Romeo?")
+    print([tok.decode([i]) for i in ids])
+    assert tok.decode(tok.encode(text[:20000])) == text[:20000]
+    print("decode(encode(tekst)) == tekst: OK")
