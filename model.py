@@ -51,12 +51,14 @@ class FeedForward(nn.Module):
 class Block(nn.Module):
     def __init__(self, n_embd, n_head, block_size):
         super().__init__()
+        self.ln1 = nn.LayerNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd)
         self.sa = MultiHeadAttention(n_embd, n_head, block_size)
         self.fwd = FeedForward(n_embd)
 
     def forward(self, x):
-        x = x + self.sa(x)
-        x = x + self.fwd(x)
+        x = x + self.sa(self.ln1(x))
+        x = x + self.fwd(self.ln2(x))
         return x
         
 class BigramModel(nn.Module):
@@ -93,6 +95,7 @@ class AttentionModel(nn.Module):
             Block(n_embd, 4, block_size),
             Block(n_embd, 4, block_size),
         )
+        self.ln_f = nn.LayerNorm(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -101,6 +104,7 @@ class AttentionModel(nn.Module):
         pos = self.pos_emb(torch.arange(T, device = idx.device))
         x = tok + pos
         x = self.blocks(x)
+        x = self.ln_f(x)
         logits = self.lm_head(x)
 
         if targets is None:
