@@ -40,6 +40,18 @@ for step in range(max_steps):
     loss.backward()
     optimizer.step()
 
+l = estimate_loss()
+print(f"{max_steps}: train {l['train']:.3f}, val {l['val']:.3f}")
+
+checkpoint = {
+    'model': model.state_dict(),
+    'config': dict(n_embd=n_embd, block_size=block_size, n_head=n_head, n_layer=n_layer, dropout=dropout),
+    'chars': tok.chars,
+    'val_loss': l['val'].item(),
+}
+torch.save(checkpoint, 'model.pt')
+print("Model sačuvan u model.pt")
+
 model.eval()
 start = torch.zeros((1, 1), dtype=torch.long, device = device)
 print(tok.decode(model.generate(start, max_new_tokens=300)[0].tolist()))
