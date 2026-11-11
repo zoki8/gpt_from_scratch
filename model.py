@@ -32,6 +32,19 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x):
         return torch.cat([h(x) for h in self.heads], dim=-1)
+
+
+class FeedForward(nn.Module):
+    def __init__(self, n_embd):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_embd, 4 * n_embd),
+            nn.ReLU(),
+            nn.Linear(4 * n_embd, n_embd)
+        )
+
+    def forward(self, x):
+        return self.net(x)
         
 class BigramModel(nn.Module):
     def __init__(self, vocab_size: int):
@@ -63,6 +76,7 @@ class AttentionModel(nn.Module):
         self.token_emb = nn.Embedding(vocab_size, n_embd)
         self.pos_emb = nn.Embedding(block_size, n_embd)
         self.head = MultiHeadAttention(n_embd, 4, block_size)
+        self.ffwd = FeedForward(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -71,6 +85,7 @@ class AttentionModel(nn.Module):
         pos = self.pos_emb(torch.arange(T, device = idx.device))
         x = tok + pos
         x = self.head(x)
+        x = self.ffwd(x)
         logits = self.lm_head(x)
 
         if targets is None:
