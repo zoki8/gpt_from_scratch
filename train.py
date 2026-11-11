@@ -3,18 +3,19 @@ from data import get_batch, tok
 from model import AttentionModel
 
 batch_size = 64
-block_size = 64
+block_size = 128
 max_steps = 5000
 eval_interval = 500
 eval_iters = 100
-n_embd = 128
+n_embd = 256
 n_head = 4
-n_layer = 4
-dropout = 0.1
+n_layer = 6
+dropout = 0.2
+learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model = AttentionModel(tok.vocab_size, n_embd, block_size, n_head, n_layer, dropout).to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 @torch.no_grad()
 def estimate_loss():

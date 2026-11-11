@@ -13,6 +13,8 @@ model.eval()
 
 prompt = sys.argv[1] if len(sys.argv) > 1 else '\n'
 length = int(sys.argv[2]) if len(sys.argv) > 2 else 500
+temperature = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0
+
 
 unknown = sorted(set(prompt) - set(tok.chars))
 if unknown:
@@ -20,5 +22,5 @@ if unknown:
 
 idx = torch.tensor([tok.encode(prompt)], dtype=torch.long, device=device)
 with torch.no_grad():
-    out = model.generate(idx, max_new_tokens=length)
+    out = model.generate(idx, max_new_tokens=length, temperature=temperature)
 print(tok.decode(out[0].tolist()))

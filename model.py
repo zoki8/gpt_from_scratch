@@ -112,11 +112,11 @@ class AttentionModel(nn.Module):
         loss = F.cross_entropy(logits.view(-1, logits.shape[-1]), targets.view(-1))
         return logits, loss
 
-    def generate(self, idx, max_new_tokens):
+    def generate(self, idx, max_new_tokens, temperature = 1.0):
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -self.block_size:]
             logits, _ = self(idx_cond)
-            logits = logits[:, -1, :]
+            logits = logits[:, -1, :]/temperature
             probabilities = F.softmax(logits, dim= -1)
             idx_next = torch.multinomial(probabilities, num_samples=1)
             idx = torch.cat((idx, idx_next), dim=1)
