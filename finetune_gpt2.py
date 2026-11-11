@@ -1,3 +1,5 @@
+import os
+os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
 import torch
 from torch.nn import functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
@@ -12,6 +14,7 @@ learning_rate = 5e-5
 
 tok = GPT2TokenizerFast.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
+model.gradient_checkpointing_enable()   # štedi memoriju: međurezultati se ponovo računaju u backward-u
 
 text = open('data/input.txt', encoding='utf-8').read()
 data = torch.tensor(tok.encode(text), dtype=torch.long)
