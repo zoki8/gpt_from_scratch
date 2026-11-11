@@ -1,12 +1,12 @@
 import sys
 import torch
 from model import AttentionModel
-from tokenizer import CharTokenizer
+from tokenizer import load_tokenizer
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 checkpoint = torch.load('model.pt', map_location=device)
-tok = CharTokenizer(''.join(checkpoint['chars']))
+tok = load_tokenizer(checkpoint['tokenizer'])
 model = AttentionModel(tok.vocab_size, **checkpoint['config']).to(device)
 model.load_state_dict(checkpoint['model'])
 model.eval()

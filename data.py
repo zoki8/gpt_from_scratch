@@ -1,8 +1,21 @@
+import json
+import os
 import torch
-from tokenizer import CharTokenizer
+from tokenizer import CharTokenizer, BPETokenizer, load_tokenizer
+
+TOKENIZER = 'bpe'          # 'char' or 'bpe'
+BPE_VOCAB_SIZE = 512
+BPE_PATH = 'bpe.json'
 
 text = open('data/input.txt', encoding = 'utf-8').read()
-tok = CharTokenizer(text)
+if TOKENIZER == 'bpe':
+    if os.path.exists(BPE_PATH):
+        tok = load_tokenizer(json.load(open(BPE_PATH)))
+    else:
+        tok = BPETokenizer.train(text, BPE_VOCAB_SIZE)
+        json.dump(tok.to_dict(), open(BPE_PATH, 'w'))
+else:
+    tok = CharTokenizer(text)
 
 data = torch.tensor(tok.encode(text), dtype=torch.long)
 n = int(0.9 * len(data))

@@ -1,5 +1,5 @@
 import torch
-from data import get_batch, tok
+from data import get_batch, tok, text, data
 from model import AttentionModel
 
 batch_size = 64
@@ -43,11 +43,12 @@ for step in range(max_steps):
 
 l = estimate_loss()
 print(f"{max_steps}: train {l['train']:.3f}, val {l['val']:.3f}")
+print(f"val loss po karakteru: {l['val'] * len(data) / len(text):.3f} ({len(text) / len(data):.2f} karaktera po tokenu)")
 
 checkpoint = {
     'model': model.state_dict(),
     'config': dict(n_embd=n_embd, block_size=block_size, n_head=n_head, n_layer=n_layer, dropout=dropout),
-    'chars': tok.chars,
+    'tokenizer': tok.to_dict(),
     'val_loss': l['val'].item(),
 }
 torch.save(checkpoint, 'model.pt')
