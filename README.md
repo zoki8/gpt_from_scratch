@@ -1,6 +1,6 @@
 # GPT from scratch
 
-A small GPT written from scratch in PyTorch and trained on Shakespeare. The project builds up one piece at a time: a character tokenizer first, then a bigram model, self-attention, multi-head attention, feed-forward layers, transformer blocks with residual connections and LayerNorm, dropout, a bigger model trained on a GPU, a faster batched attention, and a BPE tokenizer written from scratch. A script for fine-tuning the pretrained GPT-2 on the same text is included for comparison.
+A small GPT written from scratch in PyTorch and trained on Shakespeare. The project builds up one piece at a time: a character tokenizer first, then a bigram model, self-attention, multi-head attention, feed-forward layers, transformer blocks with residual connections and LayerNorm, dropout, a bigger model trained on a GPU, a faster batched attention, and a BPE tokenizer written from scratch. For comparison, two scripts fine-tune pretrained models on the same text: full fine-tuning of GPT-2 (124M), and LoRA, also written from scratch, which fits GPT-2 medium (355M) on a 4 GB GPU by training only 0.22% of its parameters.
 
 ## Sample
 
