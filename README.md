@@ -56,6 +56,8 @@ The 4.8M model trains in about 9 minutes on an NVIDIA RTX 2050 (4 GB). Computing
 | `generate.py` | Loads `model.pt` and writes new text from a prompt |
 | `attention_playground.py` | Small experiment showing how a triangular matrix averages past tokens, the trick behind masked attention |
 | `finetune_gpt2.py` | Fine-tunes the pretrained GPT-2 (124M parameters) on the same text, printing samples before and after |
+| `lora.py` | LoRA written from scratch: `LoRALinear` freezes a layer and learns a low-rank update `B @ A` (B starts at zero, so training starts from the original model); `apply_lora` wraps GPT-2's attention layers |
+| `finetune_lora.py` | Fine-tunes GPT-2 medium (355M parameters) with LoRA: 786K trainable parameters (0.22%), frozen weights in bfloat16, saves only the 3 MB adapter to `lora_medium.pt` |
 
 ## Model
 
@@ -112,6 +114,14 @@ python finetune_gpt2.py
 ```
 
 This downloads GPT-2 (about 550 MB) on the first run, prints a sample before training, fine-tunes for 500 steps with a small learning rate (5e-5) using bfloat16 autocast so it fits in 4 GB, and prints a sample after. The fine-tuned model is saved to `gpt2-shakespeare/`, which is not in the repository. This script has not been run yet, so there are no results for it in the table above.
+
+### LoRA on GPT-2 medium
+
+```bash
+python finetune_lora.py
+```
+
+Full fine-tuning of GPT-2 medium would need about 4.3 GB just for gradients and AdamW state, more than the 4 GB card has. With LoRA (rank 8 on every attention `c_attn` layer) only 786K parameters are trained, so the frozen 355M-parameter model fits in bfloat16 with gradient checkpointing. Before any fine-tuning, GPT-2 medium already reaches a validation loss of about 1.16 per character on this text, because it already knows English (and has likely seen Shakespeare during pretraining); its samples are modern English prose, not play dialogue. A full 500-step run has not been done yet.
 
 ## Data
 
