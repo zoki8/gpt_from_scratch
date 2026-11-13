@@ -31,29 +31,47 @@ def estimate_loss():
     model.train()
     return out
 
+def save_checkpoint(step, val_loss):
+    checkpoint = {
+        'model': model.state_dict(),
+        'config': dict(n_embd=n_embd, block_size=block_size, n_head=n_head, n_layer=n_layer, dropout=dropout),
+        'tokenizer': tok.to_dict(),
+        'val_loss': val_loss,
+        'step': step,
+    }
+    torch.save(checkpoint, 'model.pt')
+
+
+best_val = float('inf')
+best_step = None
+
+
+def evaluate(step):
+    global best_val, best_step
+    l = estimate_loss()
+    val = l['val'].item()
+    mark = ''
+    if val < best_val:
+        best_val, best_step = val, step
+        save_checkpoint(step, val)
+        mark = '  <- najbolji do sada, sačuvan'
+    print(f"{step}: train {l['train']:.3f}, val {val:.3f}{mark}")
+
+
 for step in range(max_steps):
     if step % eval_interval == 0:
-        l = estimate_loss()
-        print(f"{step}: train {l['train']:.3f}, val {l['val']:.3f}")
+        evaluate(step)
     x, y = get_batch('train', block_size, batch_size, device= device)
     logits, loss = model(x, y)
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
-l = estimate_loss()
-print(f"{max_steps}: train {l['train']:.3f}, val {l['val']:.3f}")
-print(f"val loss po karakteru: {l['val'] * len(data) / len(text):.3f} ({len(text) / len(data):.2f} karaktera po tokenu)")
+evaluate(max_steps)
+print(f"Najbolji model: korak {best_step}, val {best_val:.3f} "
+      f"({best_val * len(data) / len(text):.3f} po karakteru, {len(text) / len(data):.2f} karaktera po tokenu), sačuvan u model.pt")
 
-checkpoint = {
-    'model': model.state_dict(),
-    'config': dict(n_embd=n_embd, block_size=block_size, n_head=n_head, n_layer=n_layer, dropout=dropout),
-    'tokenizer': tok.to_dict(),
-    'val_loss': l['val'].item(),
-}
-torch.save(checkpoint, 'model.pt')
-print("Model sačuvan u model.pt")
-
+model.load_state_dict(torch.load('model.pt', map_location=device)['model'])
 model.eval()
 start = torch.zeros((1, 1), dtype=torch.long, device = device)
 print(tok.decode(model.generate(start, max_new_tokens=300)[0].tolist()))
